@@ -10,7 +10,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/gophergala/go_report/check"
+	"./check"
 )
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
