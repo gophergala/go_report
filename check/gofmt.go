@@ -10,5 +10,5 @@ func (g GoFmt) Name() string {
 
 // Percentage returns the percentage of .go files that pass gofmt
 func (g GoFmt) Percentage() (float64, map[string][]string, error) {
-	return GoTool(g.Dir, []string{"gofmt", "-l"})
+	return GoTool(g.Dir, []string{"gofmt", "-s", "-l"})
 }
