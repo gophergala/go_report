@@ -9,7 +9,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/gophergala/go_report/check"
+	"./check"
 )
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
@@ -17,7 +17,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func checkHandler(w http.ResponseWriter, r *http.Request) {
-	repo := r.FormValue("repo")
+	repo := r.FormValue("url")
 	if !strings.HasPrefix(repo, "https://") {
 		repo = "https://" + repo
 	}
@@ -25,16 +25,15 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 	split := strings.Split(dir, "/")
 	dir = fmt.Sprintf("repos/%s-%s", split[len(split)-2], split[len(split)-1])
 	_, err := os.Stat(dir)
-	if err != nil && !os.IsNotExist(err) {
-		http.Error(w, fmt.Sprintf("Could not stat dir: %v", err), 500)
-		return
-
-	} else if os.IsNotExist(err) {
+	if os.IsNotExist(err) {
 		cmd := exec.Command("git", "clone", repo, dir)
 		if err := cmd.Run(); err != nil {
 			http.Error(w, fmt.Sprintf("Could not run git clone: %v", err), 500)
 			return
 		}
+	} else if err != nil {
+		http.Error(w, fmt.Sprintf("Could not stat dir: %v", err), 500)
+		return
 	} else {
 		cmd := exec.Command("git", "-C", dir, "pull")
 		if err := cmd.Run(); err != nil {
@@ -52,8 +51,8 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := checksResp{}
-	checks := []check.Check{check.GoFmt{Dir: dir},
-		check.GoVet{Dir: dir}}
+	checks := []check.Check{check.GoFmt{Dir: dir}} //check.GoVet{Dir: dir}
+
 	for _, c := range checks {
 		p, err := c.Percentage()
 		if err != nil {
