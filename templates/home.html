@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-    <title>Go Report Card | A Gophergala Hacakthon Product</title>
+    <title>Go Report Card | A Gopher Gala Hackathon Product</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
     <style>
@@ -36,6 +36,12 @@
     }
     .results .cell-progress-bar {
       width: 70%;
+    }
+
+    /* Partials section
+    -------------------------------------------------- */
+    #partials {
+      display: none;
     }
 
     /* Footer section
@@ -76,16 +82,16 @@
       </div>
       <div class="row input-row">
         <div class="col-md-8 col-md-offset-2">
-          <div class="col-md-9">
-          <form>
-            <p>
-              <input type="text" class="input-box" />
-            </p>
+          <form method="POST" action="/checks" id="check-form">
+            <div class="col-md-9">
+              <p>
+                <input name="url" type="text" class="input-box" />
+              </p>
+            </div>
+            <div class="col-md-3">
+              <button type="submit" class="btn btn-primary btn-lg" href="#" role="button" class="btn-test">Test Now</button>
+            </div>
           </form>
-          </div>
-          <div class="col-md-3">
-            <a class="btn btn-primary btn-lg" href="#" role="button" class="btn-test">Test Now</a>
-          </div>
         </div>
       </div>
     </div>
@@ -141,11 +147,39 @@
             <a href="https://twitter.com/shawnps">@shawnps</a>, 
             <a href="https://twitter.com/legogris">@legogris</a>, 
             <a href="https://twitter.com/dallarosajp">@dallarosajp</a> and 
-            <a href="https://twitter.com/ironzeb">@ironzeb</a> during the 2014 <a href="http://gophergala.com">Gophergala</a> Hackathon
+            <a href="https://twitter.com/ironzeb">@ironzeb</a> during the 2014 <a href="http://gophergala.com">Gopher Gala</a> Hackathon
           </p>
         </div>
       </div>
     </div>
   </div>
+  <div id="partials">
+    <div class="alert alert-warning alert-dismissible" role="alert">
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="message">
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.3.js"></script>
+  <script type="text/javascript">
+    $("form#check-form").submit(function(){
+      var $form = $(this),
+          url = $form.attr("action"),
+          method = $form.attr("method"),
+          data = {};
+      $form.serializeArray().map(function(x){data[x.name] = x.value;}); 
+      $.ajax({
+        type: method,
+        url: url,
+        data: data,
+        dataType: "json"
+      }).fail(function(xhr, status, err){
+          console.log("failed!", xhr, status, err);
+      }).success(function(xhr, status, err){
+          console.log("success!", xhr, status, err);
+      });
+      return false;
+    });
+  </script>
 </body>
 </html>
