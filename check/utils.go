@@ -44,7 +44,7 @@ func GoTool(dir string, cmd []string) (float64, error) {
 		params = append(params, fi)
 		out, err := exec.Command(cmd[0], params...).Output()
 		if err != nil {
-			return 0, nil
+			return 0, err
 		}
 		if string(out) != "" {
 			failed = append(failed, fi)
