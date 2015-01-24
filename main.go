@@ -38,23 +38,27 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 	if os.IsNotExist(err) {
 		cmd := exec.Command("git", "clone", repo, dir)
 		if err := cmd.Run(); err != nil {
+			log.Println("ERROR: ", err)
 			http.Error(w, fmt.Sprintf("Could not run git clone: %v", err), 500)
 			return
 		}
 	} else if err != nil {
+		log.Println("ERROR: ", err)
 		http.Error(w, fmt.Sprintf("Could not stat dir: %v", err), 500)
 		return
 	} else {
 		cmd := exec.Command("git", "-C", dir, "pull")
 		if err := cmd.Run(); err != nil {
+			log.Println("ERROR: ", err)
 			http.Error(w, fmt.Sprintf("Could not pull repo: %v", err), 500)
 			return
 		}
 	}
 
 	type score struct {
-		Name       string  `json:"name"`
-		Percentage float64 `json:"percentage"`
+		Name       string              `json:"name"`
+		Errors     map[string][]string `json:"errors"`
+		Percentage float64             `json:"percentage"`
 	}
 	type checksResp struct {
 		Checks []score `json:"checks"`
@@ -68,17 +72,19 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, c := range checks {
-		p, err := c.Percentage()
+		p, out, err := c.Percentage()
 		if err != nil {
+			log.Println("ERROR: ", err)
 			http.Error(w, fmt.Sprintf("Could not run check: %v", err), 500)
 			return
 		}
-		ch := score{c.Name(), p}
+		ch := score{c.Name(), out, p}
 		resp.Checks = append(resp.Checks, ch)
 	}
 
 	b, err := json.Marshal(resp)
 	if err != nil {
+		log.Println("ERROR: ", err)
 		http.Error(w, err.Error(), 500)
 		return
 	}
@@ -87,7 +93,7 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	if err := os.Mkdir("repos", 0755); err != nil && !os.IsExist(err) {
-		log.Fatal("could not create repos dir: ", err)
+		log.Fatal("ERROR: could not create repos dir: ", err)
 	}
 
 	http.HandleFunc("/assets/", assetsHandler)

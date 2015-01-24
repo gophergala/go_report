@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"syscall"
 )
 
@@ -35,12 +36,12 @@ func GoFiles(dir string) ([]string, error) {
 
 // GoTool runs a given go command (for example gofmt, go tool vet)
 // on a directory
-func GoTool(dir string, command []string) (float64, error) {
+func GoTool(dir string, command []string) (float64, map[string][]string, error) {
 	files, err := GoFiles(dir)
 	if err != nil {
-		return 0, nil
+		return 0, map[string][]string{}, nil
 	}
-	var failed []string
+	var failed = make(map[string][]string)
 	for _, fi := range files {
 		params := command[1:]
 		params = append(params, fi)
@@ -48,27 +49,27 @@ func GoTool(dir string, command []string) (float64, error) {
 		cmd := exec.Command(command[0], params...)
 		stdout, err := cmd.StdoutPipe()
 		if err != nil {
-			return 0, err
+			return 0, map[string][]string{}, nil
 		}
 
 		stderr, err := cmd.StderrPipe()
 		if err != nil {
-			return 0, err
+			return 0, map[string][]string{}, nil
 		}
 
 		err = cmd.Start()
 		if err != nil {
-			return 0, err
+			return 0, map[string][]string{}, nil
 		}
 
 		out, err := ioutil.ReadAll(stdout)
 		if err != nil {
-			return 0, err
+			return 0, map[string][]string{}, nil
 		}
 
 		errout, err := ioutil.ReadAll(stderr)
 		if err != nil {
-			return 0, err
+			return 0, map[string][]string{}, nil
 		}
 
 		err = cmd.Wait()
@@ -78,20 +79,20 @@ func GoTool(dir string, command []string) (float64, error) {
 			if status, ok := exitErr.Sys().(syscall.WaitStatus); ok {
 				// some commands exit 1 when files fail to pass (for example go vet)
 				if status.ExitStatus() != 1 {
-					return 0, err
+					return 0, map[string][]string{}, err
 				}
 			}
 		}
 
 		if string(out) != "" {
-			failed = append(failed, fi)
+			failed[fi] = append(failed[fi], strings.Split(string(out), "\n")...)
 		}
 
 		// go vet logs to stderr
 		if string(errout) != "" {
-			failed = append(failed, fi)
+			failed[fi] = append(failed[fi], strings.Split(string(errout), "\n")...)
 		}
 	}
 
-	return float64(len(files)-len(failed)) / float64(len(files)), nil
+	return float64(len(files)-len(failed)) / float64(len(files)), failed, nil
 }
