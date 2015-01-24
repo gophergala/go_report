@@ -72,18 +72,6 @@ func GoTool(dir string, command []string) (float64, map[string][]string, error) 
 			return 0, map[string][]string{}, nil
 		}
 
-		err = cmd.Wait()
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			// The program has exited with an exit code != 0
-
-			if status, ok := exitErr.Sys().(syscall.WaitStatus); ok {
-				// some commands exit 1 when files fail to pass (for example go vet)
-				if status.ExitStatus() != 1 {
-					return 0, map[string][]string{}, err
-				}
-			}
-		}
-
 		if string(out) != "" {
 			split := strings.Split(string(out), "\n")
 			failed[fi] = append(failed[fi], split[0:len(split)-1]...)
@@ -94,6 +82,20 @@ func GoTool(dir string, command []string) (float64, map[string][]string, error) 
 			split := strings.Split(string(errout), "\n")
 			failed[fi] = append(failed[fi], split[0:len(split)-1]...)
 		}
+
+		err = cmd.Wait()
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			// The program has exited with an exit code != 0
+
+			if status, ok := exitErr.Sys().(syscall.WaitStatus); ok {
+				// some commands exit 1 when files fail to pass (for example go vet)
+				if status.ExitStatus() != 1 {
+					return 0, failed, err
+					// return 0, map[string][]string{}, err
+				}
+			}
+		}
+
 	}
 
 	return float64(len(files)-len(failed)) / float64(len(files)), failed, nil

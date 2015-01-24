@@ -75,7 +75,7 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 		p, out, err := c.Percentage()
 		if err != nil {
 			log.Println("ERROR: ", err)
-			http.Error(w, fmt.Sprintf("Could not run check: %v", err), 500)
+			http.Error(w, fmt.Sprintf("Could not run check %v: %v\r\n%v", c.Name(), err, out), 500)
 			return
 		}
 		ch := score{c.Name(), out, p}
