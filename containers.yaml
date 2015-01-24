@@ -1,7 +1,7 @@
 version: v1beta2
 containers:
 - name: goreport
-  image: goreport/goreport
+  image: legogris/goreport
   ports:
   - name: http
     hostPort: 80
