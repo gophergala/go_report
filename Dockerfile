@@ -4,8 +4,8 @@
  WORKDIR /go/src/github.com/gophergala/go_report
 
 
- COPY . /go/src/github.com/gophergala/go_report
- RUN go-wrapper install
+ #COPY . /go/src/github.com/gophergala/go_report
+ #RUN go-wrapper install
  CMD ["go-wrapper", "run"]
  ONBUILD COPY . /go/src/github.com/gophergala/go_report
  #ONBUILD RUN echo '/go/src/github.com/gophergala/go_report' > .godir
