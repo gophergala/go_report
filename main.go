@@ -33,7 +33,13 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	dir := strings.TrimSuffix(repo, ".git")
 	split := strings.Split(dir, "/")
-	dir = fmt.Sprintf("repos/%s-%s", split[len(split)-2], split[len(split)-1])
+	org := split[len(split)-2]
+	repoName := split[len(split)-1]
+	if err := os.Mkdir(fmt.Sprintf("repos/src/github.com/%s", org), 0755); err != nil && !os.IsExist(err) {
+		http.Error(w, fmt.Sprintf("Could not create dir: %v", err), 500)
+		return
+	}
+	dir = fmt.Sprintf("repos/src/github.com/%s/%s", org, repoName)
 	_, err := os.Stat(dir)
 	if os.IsNotExist(err) {
 		cmd := exec.Command("git", "clone", repo, dir)
@@ -92,7 +98,7 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	if err := os.Mkdir("repos", 0755); err != nil && !os.IsExist(err) {
+	if err := os.MkdirAll("repos/src/github.com", 0755); err != nil && !os.IsExist(err) {
 		log.Fatal("ERROR: could not create repos dir: ", err)
 	}
 
