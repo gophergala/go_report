@@ -28,40 +28,51 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	dir := strings.TrimSuffix(repo, ".git")
 	split := strings.Split(dir, "/")
-	dir = fmt.Sprintf("repos/%s", split[len(split)-1])
-	cmd := exec.Command("git", "clone", repo, dir)
-	if err := cmd.Start(); err != nil {
-		log.Fatal(err)
-	}
-	err := cmd.Wait()
-	if err != nil {
-		http.Error(w, err.Error(), 500)
+	dir = fmt.Sprintf("repos/%s-%s", split[len(split)-2], split[len(split)-1])
+	_, err := os.Stat(dir)
+	if err != nil && !os.IsNotExist(err) {
+		http.Error(w, fmt.Sprintf("Could not stat dir: %v", err), 500)
+		return
+
+	} else if os.IsNotExist(err) {
+		cmd := exec.Command("git", "clone", repo, dir)
+		if err := cmd.Run(); err != nil {
+			http.Error(w, fmt.Sprintf("Could not run git clone: %v", err), 500)
+			return
+		}
+	} else {
+		cmd := exec.Command("git", "-C", dir, "pull")
+		if err := cmd.Run(); err != nil {
+			http.Error(w, fmt.Sprintf("Could not pull repo: %v", err), 500)
+			return
+		}
 	}
 
-	checks := []check.Check{check.GoFmt{Dir: dir}}
-	type check struct {
+	type score struct {
 		Name       string  `json:"name"`
 		Percentage float64 `json:"percentage"`
 	}
 	type checksResp struct {
-		checks []check `json:"checks"`
+		Checks []score `json:"checks"`
 	}
 
 	resp := checksResp{}
+	checks := []check.Check{check.GoFmt{Dir: dir}}
 	for _, c := range checks {
 		p, err := c.Percentage()
 		if err != nil {
-			http.Error(w, err.Error(), 500)
+			http.Error(w, fmt.Sprintf("Could not run check: %v", err), 500)
+			return
 		}
-		ch := check{c.Name(), p}
-		resp.checks = append(resp.checks, ch)
+		ch := score{c.Name(), p}
+		resp.Checks = append(resp.Checks, ch)
 	}
 
 	b, err := json.Marshal(resp)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
+		return
 	}
-
 	w.Write(b)
 }
 
