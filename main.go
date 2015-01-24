@@ -1,11 +1,16 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
+	"strings"
+
+	"github.com/gophergala/go_report/check"
 )
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
@@ -17,28 +22,58 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func checkHandler(w http.ResponseWriter, r *http.Request) {
-	//repo := r.FormValue("repo")
-	//if !strings.HasPrefix(repo, "https://") {
-	//	repo = "https://" + repo
-	//}
-	//dir := strings.TrimSuffix(repo, ".git")
-	//split := strings.Split(dir, "/")
-	//dir = fmt.Sprintf("repos/%s", split[len(split)-1])
-	//cmd := exec.Command("git", "clone", repo, dir)
-	//if err != nil {
-	//	http.Error(w, err.Error(), 500)
-	//}
+	repo := r.FormValue("repo")
+	if !strings.HasPrefix(repo, "https://") {
+		repo = "https://" + repo
+	}
+	dir := strings.TrimSuffix(repo, ".git")
+	split := strings.Split(dir, "/")
+	dir = fmt.Sprintf("repos/%s-%s", split[len(split)-2], split[len(split)-1])
+	_, err := os.Stat(dir)
+	if err != nil && !os.IsNotExist(err) {
+		http.Error(w, fmt.Sprintf("Could not stat dir: %v", err), 500)
+		return
 
-	//checks := []check.Check{check.GoFmt{Dir: repo}}
-	//type resp struct {
-	//	Checks []check.Check
-	//}
-	//for _, c := range checks {
-	//	//
-	//}
-	// clone the repo
-	// run the checks
-	// return the json
+	} else if os.IsNotExist(err) {
+		cmd := exec.Command("git", "clone", repo, dir)
+		if err := cmd.Run(); err != nil {
+			http.Error(w, fmt.Sprintf("Could not run git clone: %v", err), 500)
+			return
+		}
+	} else {
+		cmd := exec.Command("git", "-C", dir, "pull")
+		if err := cmd.Run(); err != nil {
+			http.Error(w, fmt.Sprintf("Could not pull repo: %v", err), 500)
+			return
+		}
+	}
+
+	type score struct {
+		Name       string  `json:"name"`
+		Percentage float64 `json:"percentage"`
+	}
+	type checksResp struct {
+		Checks []score `json:"checks"`
+	}
+
+	resp := checksResp{}
+	checks := []check.Check{check.GoFmt{Dir: dir}}
+	for _, c := range checks {
+		p, err := c.Percentage()
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Could not run check: %v", err), 500)
+			return
+		}
+		ch := score{c.Name(), p}
+		resp.Checks = append(resp.Checks, ch)
+	}
+
+	b, err := json.Marshal(resp)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	w.Write(b)
 }
 
 func main() {
