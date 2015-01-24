@@ -4,12 +4,16 @@ import (
 	"os/exec"
 )
 
-type GoFmtCheck struct {
+type GoFmt struct {
 	Dir string
 }
 
+func (g GoFmt) Name() string {
+	return "gofmt"
+}
+
 // Percentage returns the percentage of .go files that pass gofmt
-func (g GoFmtCheck) Percentage() (float64, error) {
+func (g GoFmt) Percentage() (float64, error) {
 	files, err := GoFiles(g.Dir)
 	if err != nil {
 		return 0, nil
