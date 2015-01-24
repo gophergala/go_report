@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 )
@@ -32,6 +33,21 @@ func GoFiles(dir string) ([]string, error) {
 	err := filepath.Walk(dir, visit)
 
 	return filenames, err
+}
+
+// lineCount returns the number of lines in a given file
+func lineCount(filepath string) (int, error) {
+	out, err := exec.Command("wc", "-l", filepath).Output()
+	if err != nil {
+		return 0, err
+	}
+	// wc output is like: 999 filename.go
+	count, err := strconv.Atoi(strings.Split(strings.TrimSpace(string(out)), " ")[0])
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 // GoTool runs a given go command (for example gofmt, go tool vet)
@@ -96,6 +112,14 @@ func GoTool(dir string, command []string) (float64, map[string][]string, error) 
 			}
 		}
 
+	}
+
+	if len(files) == 1 {
+		lc, err := lineCount(files[0])
+		if err != nil {
+			return 0, failed, err
+		}
+		return float64(lc-len(failed[files[0]])) / float64(lc), failed, nil
 	}
 
 	return float64(len(files)-len(failed)) / float64(len(files)), failed, nil
