@@ -2,8 +2,6 @@ package check
 
 import (
 	"os/exec"
-
-	"github.com/gophergala/go_report/check"
 )
 
 type GoFmtCheck struct {
@@ -11,8 +9,8 @@ type GoFmtCheck struct {
 }
 
 // Percentage returns the percentage of .go files that pass gofmt
-func (g *GoFmtCheck) Percentage() (float64, error) {
-	files, err := check.GoFiles(g.Dir)
+func (g GoFmtCheck) Percentage() (float64, error) {
+	files, err := GoFiles(g.Dir)
 	if err != nil {
 		return 0, nil
 	}
@@ -26,5 +24,5 @@ func (g *GoFmtCheck) Percentage() (float64, error) {
 			failed = append(failed, fi)
 		}
 	}
-	return len(failed) / len(files), nil
+	return float64(len(files)-len(failed)) / float64(len(files)), nil
 }
