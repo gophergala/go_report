@@ -47,6 +47,6 @@ func main() {
 	}
 	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/checks", checkHandler)
-	fmt.Println("Running on 127.0.0.1:8080...")
-	log.Fatal(http.ListenAndServe("127.0.0.1:8080", nil))
+	fmt.Println("Running on :8080...")
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
