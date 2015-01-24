@@ -85,12 +85,14 @@ func GoTool(dir string, command []string) (float64, map[string][]string, error) 
 		}
 
 		if string(out) != "" {
-			failed[fi] = append(failed[fi], strings.Split(string(out), "\n")...)
+			split := strings.Split(string(out), "\n")
+			failed[fi] = append(failed[fi], split[0:len(split)-1]...)
 		}
 
 		// go vet logs to stderr
 		if string(errout) != "" {
-			failed[fi] = append(failed[fi], strings.Split(string(errout), "\n")...)
+			split := strings.Split(string(errout), "\n")
+			failed[fi] = append(failed[fi], split[0:len(split)-1]...)
 		}
 	}
 
