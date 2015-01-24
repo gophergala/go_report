@@ -25,6 +25,21 @@
     .btn-test {
         width: 100%;
     }
+    .url label {
+        z-index: 2;
+        position: absolute;
+        line-height: 46px;
+        font-weight: normal;
+        color: rgb(51, 51, 51);
+        font-weight: 200;
+    }
+    .url input {
+        position: absolute;
+        right: 0;
+        z-index: 1;
+        margin-left: -190px;
+        padding-left: 190px;
+    }
 
     /* Results section
     -------------------------------------------------- */
@@ -45,6 +60,9 @@
     }
     .alert {
       margin-bottom: 0;
+    }
+    .gopher {
+      width: 150px;
     }
 
     /* Footer section
@@ -89,8 +107,8 @@
         <div class="col-md-8 col-md-offset-2">
           <form method="POST" action="/checks" id="check-form">
             <div class="col-md-9">
-              <p>
-                <input name="url" type="text" class="input-box" />
+              <p class="url">
+                <label>https://github.com/</label><input name="url" type="text" class="input-box" placeholder="gophergala/go_report"/>
               </p>
             </div>
             <div class="col-md-3">
@@ -102,6 +120,11 @@
     </div>
   </div>
   <div class="container">
+    <div class="row">
+      <div class="col-md-12 text-center">
+        <img src="/assets/gopherhat.jpg" class="gopher" />
+      </div>
+    </div>
     <div class="row">
       <div class="col-md-10 col-md-offset-1">
         <table class="table table-hover results">
@@ -118,7 +141,7 @@
             <a href="https://twitter.com/shawnps">@shawnps</a>, 
             <a href="https://twitter.com/legogris">@legogris</a>, 
             <a href="https://twitter.com/dallarosajp">@dallarosajp</a> and 
-            <a href="https://twitter.com/ironzeb">@ironzeb</a> during the 2014 <a href="http://gophergala.com">Gopher Gala</a> Hackathon
+            <a href="https://twitter.com/ironzeb">@ironzeb</a> during the 2014 <a href="http://gophergala.com">Gopher Gala</a> Hackathon. The Go Gopher was created by <a href="http://reneefrench.blogspot.com/">Renée French</a>
           </p>
         </div>
       </div>
@@ -149,6 +172,8 @@
     </tr>
   </script>
   <script type="text/javascript">
+    var loading = false;
+
     // initialize handlebars templates
     var templates = {};
     $("script[id^=template]").each(function(){
@@ -162,6 +187,29 @@
       $header.find(".title, .description").slideUp();
     }
 
+    function spinGopher(){
+      if (!loading) {
+        return false;
+      };
+      var $gopher = $(".gopher"),
+          angle = 360;
+      $({deg: 0}).animate({deg: angle}, {
+        duration: 1000,
+        step: function(now) {
+          $gopher.css({
+              transform: 'rotate(' + now + 'deg)'
+          });
+        },
+        easing: 'linear',
+        always: spinGopher
+      });
+      return true;
+    }
+
+    function hideGopher(){
+      $(".gopher").hide();
+    }
+
     var populate = function(checks){
         var $table = $(".table.results");
         for (var i = 0; i < checks.length; i++) {
@@ -173,18 +221,20 @@
 
     // handle form submission
     $("form#check-form").submit(function(){
+      loading = true;
       var $form = $(this),
           url = $form.attr("action"),
           method = $form.attr("method"),
           data = {};
       shrinkHeader();
+      spinGopher();
       $form.serializeArray().map(function(x){data[x.name] = x.value;}); 
       $.ajax({
           type: method,
           url: url,
           data: data,
           dataType: "json"
-      }).fail(function(xhr, status, err){
+      }).fail(function(xhr, status, err){;
           var html = templates.alert({message: "<strong>Oops!</strong> There was an error processing your request: " + err});
           var $alert = $(html);
           $alert.on("click", function(){
@@ -194,7 +244,10 @@
           $alert.appendTo("#notifications");
           $alert.slideDown();
       }).done(function(data, textStatus, jqXHR){
+          hideGopher();
           populate(data.checks);
+      }).always(function(){
+          loading = false;
       });
       return false;
     });    

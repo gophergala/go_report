@@ -13,13 +13,23 @@ import (
 )
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "templates/home.html")
+	log.Println("Serving home page")
+	if r.URL.Path[1:] == "" {
+		http.ServeFile(w, r, "templates/home.html")
+	} else {
+		http.NotFound(w, r)
+	}
+}
+
+func assetsHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("Serving " + r.URL.Path[1:])
+	http.ServeFile(w, r, r.URL.Path[1:])
 }
 
 func checkHandler(w http.ResponseWriter, r *http.Request) {
 	repo := r.FormValue("url")
-	if !strings.HasPrefix(repo, "https://") {
-		repo = "https://" + repo
+	if !strings.HasPrefix(repo, "https://github.com/") {
+		repo = "https://github.com/" + repo
 	}
 	dir := strings.TrimSuffix(repo, ".git")
 	split := strings.Split(dir, "/")
@@ -75,8 +85,11 @@ func main() {
 	if err := os.Mkdir("repos", 0755); err != nil && !os.IsExist(err) {
 		log.Fatal("could not create repos dir: ", err)
 	}
-	http.HandleFunc("/", homeHandler)
+
+	http.HandleFunc("/assets/", assetsHandler)
 	http.HandleFunc("/checks", checkHandler)
+	http.HandleFunc("/", homeHandler)
+
 	fmt.Println("Running on :8080...")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
