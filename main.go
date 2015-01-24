@@ -62,7 +62,7 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 
 	resp := checksResp{}
 	checks := []check.Check{check.GoFmt{Dir: dir},
-		//check.GoVet{Dir: dir},
+		check.GoVet{Dir: dir},
 		check.GoLint{Dir: dir},
 		check.GoCyclo{Dir: dir},
 	}
