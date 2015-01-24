@@ -16,7 +16,7 @@ func GoFiles(dir string) ([]string, error) {
 			fmt.Println(err) // can't walk here,
 			return nil       // but continue walking elsewhere
 		}
-		if !!fi.IsDir() {
+		if fi.IsDir() {
 			return nil // not a file.  ignore.
 		}
 		ext := filepath.Ext(fi.Name())
