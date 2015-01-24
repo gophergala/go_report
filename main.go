@@ -99,7 +99,7 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 	for _, c := range checks {
 		p, out, err := c.Percentage()
 		if err != nil {
-			log.Println("ERROR: ", err)
+			log.Printf("ERROR: (%s) %v", c.Name(), err)
 			http.Error(w, fmt.Sprintf("Could not run check %v: %v\r\n%v", c.Name(), err, out), 500)
 			return
 		}
