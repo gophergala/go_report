@@ -2,13 +2,17 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 )
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "<h1>Hello world</h1>")
-
+	t, err := template.ParseFiles("templates/home.html")
+	if err != nil {
+		panic(err)
+	}
+	t.Execute(w, nil)
 }
 
 func cloneHandler(w http.ResponseWriter, r *http.Request) {
