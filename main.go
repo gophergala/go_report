@@ -9,7 +9,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"./check"
+	"github.com/gophergala/go_report/check"
 )
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
@@ -61,7 +61,11 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := checksResp{}
-	checks := []check.Check{check.GoFmt{Dir: dir}} //check.GoVet{Dir: dir}
+	checks := []check.Check{check.GoFmt{Dir: dir},
+		//check.GoVet{Dir: dir},
+		check.GoLint{Dir: dir},
+		check.GoCyclo{Dir: dir},
+	}
 
 	for _, c := range checks {
 		p, err := c.Percentage()
