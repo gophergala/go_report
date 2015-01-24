@@ -2,18 +2,13 @@ package main
 
 import (
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
 	"os"
 )
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	t, err := template.ParseFiles("templates/home.html")
-	if err != nil {
-		panic(err)
-	}
-	t.Execute(w, nil)
+	http.ServeFile(w, r, "templates/home.html")
 }
 
 func checkHandler(w http.ResponseWriter, r *http.Request) {
