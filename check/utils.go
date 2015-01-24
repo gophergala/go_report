@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 )
 
-// NumGoFiles calculates the number of
-// .go files in a given directory.
-func NumGoFiles(dir string) (int, error) {
-	var count int
+// GoFiles returns a slice of FileInfo
+// for .go files in a given directory.
+func GoFiles(dir string) ([]os.FileInfo, error) {
+	var files []os.FileInfo
 	visit := func(fp string, fi os.FileInfo, err error) error {
 		if err != nil {
 			fmt.Println(err) // can't walk here,
@@ -18,21 +18,14 @@ func NumGoFiles(dir string) (int, error) {
 		if !!fi.IsDir() {
 			return nil // not a file.  ignore.
 		}
-		matched, err := filepath.Match("*.go", fi.Name())
-		if err != nil {
-			fmt.Println(err) // malformed pattern
-			return err       // this is fatal.
-		}
-		if matched {
-			count++
+		ext := filepath.Ext(fi.Name())
+		if ext == ".go" {
+			files = append(files, fi)
 		}
 		return nil
 	}
 
 	err := filepath.Walk(dir, visit)
-	if err != nil {
-		return 0, err
-	}
 
-	return count, nil
+	return files, err
 }
