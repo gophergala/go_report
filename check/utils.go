@@ -83,7 +83,9 @@ func getFileSummary(filename, dir, cmd, out string) (FileSummary, error) {
 	}
 	split := strings.Split(string(out), "\n")
 	for _, sp := range split[0 : len(split)-1] {
-		e := Error{ErrorString: sp}
+		parts := strings.Split(sp, ":")
+		msg := parts[len(parts)-1]
+		e := Error{ErrorString: msg}
 		switch cmd {
 		case "golint", "gocyclo", "vet":
 			ln, err := strconv.Atoi(strings.Split(sp, ":")[1])
