@@ -176,18 +176,18 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 		Files:       len(filenames),
 		LastRefresh: time.Now().UTC()}
 	var avg float64
-	var issues = make(map[string]bool)
+	var issues int = 0
 	for i := 0; i < len(checks); i++ {
 		s := <-ch
 		resp.Checks = append(resp.Checks, s)
 		avg += s.Percentage
 		for _, fs := range s.FileSummaries {
-			issues[fs.Filename] = true
+			issues += len(fs.Errors)
 		}
 	}
 
 	resp.Average = avg / float64(len(checks))
-	resp.Issues = len(issues)
+	resp.Issues = issues
 
 	b, err := json.Marshal(resp)
 	if err != nil {
