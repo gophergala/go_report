@@ -122,7 +122,6 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 				log.Println("Failed to fetch from mongo: ", err)
 			} else {
 				resp.LastRefresh = resp.LastRefresh.UTC()
-				fmt.Println(resp.LastRefresh)
 				b, err := json.Marshal(resp)
 				if err != nil {
 					log.Println("ERROR: could not marshal json:", err)
