@@ -97,6 +97,9 @@
     .results .tool-description {
       color: #666;
     }
+    .container-update {
+      text-align: right;
+    }
 
     /* Partials section
     -------------------------------------------------- */
@@ -176,6 +179,8 @@
       <div class="col-md-10 col-md-offset-1">
         <table class="table table-hover results">
         </table>
+        <div class="container-update">
+        </div>
       </div>
     </div>
   </div>
@@ -253,6 +258,9 @@
         </div>
       </td>
     </tr>
+  </script>
+  <script id="template-lastrefresh" type="text/x-handlebars-template">
+  <p>Last refresh: {{last_refresh}} <a href=""><strong>Update now</strong></a></p>
   </script>
   <script type="text/javascript">
     var loading = false;
@@ -371,6 +379,12 @@
             $details.appendTo($table);
         }
         $(".container-results").removeClass('hidden').slideDown();
+
+        $lastRefresh = $(templates.lastrefresh(data));
+        $(".container-update").html($lastRefresh).find("a").on("click", function(e){
+          loadData.call($("form#check-form")[0], false);
+          return false;
+        });
     };
 
     var loadData = function(getRequest){
@@ -379,7 +393,7 @@
           url = $form.attr("action"),
           method = $form.attr("method"),
           data = {};
-      console.log($form);
+      console.log("GOnna make", getRequest ? "GET" : "POST");
       shrinkHeader();
       hideResults();
       showGopher();

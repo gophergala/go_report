@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/gophergala/go_report/check"
 	"gopkg.in/mgo.v2"
@@ -91,11 +92,12 @@ type score struct {
 }
 
 type checksResp struct {
-	Checks  []score `json:"checks"`
-	Average float64 `json:"average"`
-	Files   int     `json:"files"`
-	Issues  int     `json:"issues"`
-	Repo    string  `json:"repo"`
+	Checks      []score   `json:"checks"`
+	Average     float64   `json:"average"`
+	Files       int       `json:"files"`
+	Issues      int       `json:"issues"`
+	Repo        string    `json:"repo"`
+	LastRefresh time.Time `json:"last_refresh"`
 }
 
 func checkHandler(w http.ResponseWriter, r *http.Request) {
@@ -119,6 +121,7 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				log.Println("Failed to fetch from mogo: ", err)
 			} else {
+				resp.LastRefresh = resp.LastRefresh.UTC()
 				b, err := json.Marshal(resp)
 				if err != nil {
 					log.Println("ERROR: could not marshal json:", err)
@@ -189,6 +192,8 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 	resp.Average = avg
 	resp.Files = len(filenames)
 	resp.Issues = len(issues)
+
+	resp.LastRefresh = time.Now().UTC()
 
 	b, err := json.Marshal(resp)
 	if err != nil {
