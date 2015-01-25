@@ -119,9 +119,10 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 			resp := checksResp{}
 			err := coll.Find(bson.M{"repo": repo}).One(&resp)
 			if err != nil {
-				log.Println("Failed to fetch from mogo: ", err)
+				log.Println("Failed to fetch from mongo: ", err)
 			} else {
 				resp.LastRefresh = resp.LastRefresh.UTC()
+				fmt.Println(resp.LastRefresh)
 				b, err := json.Marshal(resp)
 				if err != nil {
 					log.Println("ERROR: could not marshal json:", err)
@@ -142,9 +143,6 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := checksResp{
-		Repo: repo,
-	}
 	dir := dirName(url)
 	filenames, err := check.GoFiles(dir)
 	if err != nil {
@@ -161,22 +159,23 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 	ch := make(chan score)
 	for _, c := range checks {
 		go func(c check.Check) {
-			p, out, err := c.Percentage()
+			p, summaries, err := c.Percentage()
 			if err != nil {
 				log.Printf("ERROR: (%s) %v", c.Name(), err)
-				//http.Error(w, fmt.Sprintf("Could not run check %v: %v\r\n%v", c.Name(), err, out), 500)
-				//return
 			}
 			s := score{
 				Name:          c.Name(),
 				Description:   c.Description(),
-				FileSummaries: out,
+				FileSummaries: summaries,
 				Percentage:    p,
 			}
 			ch <- s
 		}(c)
 	}
 
+	resp := checksResp{Repo: repo,
+		Files:       len(filenames),
+		LastRefresh: time.Now().UTC()}
 	var avg float64
 	var issues = make(map[string]bool)
 	for i := 0; i < len(checks); i++ {
@@ -188,12 +187,8 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	avg = avg / float64(len(checks))
-	resp.Average = avg
-	resp.Files = len(filenames)
+	resp.Average = avg / float64(len(checks))
 	resp.Issues = len(issues)
-
-	resp.LastRefresh = time.Now().UTC()
 
 	b, err := json.Marshal(resp)
 	if err != nil {
