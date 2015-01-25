@@ -120,12 +120,12 @@
     </div>
   </div>
   <div class="container">
-    <div class="row">
+    <div class="row container-gopher">
       <div class="col-md-12 text-center">
         <img src="/assets/gopherhat.jpg" class="gopher" />
       </div>
     </div>
-    <div class="row">
+    <div class="row container-results hidden">
       <div class="col-md-10 col-md-offset-1">
         <table class="table table-hover results">
         </table>
@@ -149,6 +149,21 @@
   </div>
   <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.3.js"></script>
   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0/handlebars.js"></script>
+  <script type="text/javascript">
+      // add a helper for picking the progress bar colors
+    Handlebars.registerHelper('color', function(percentage, options) {
+      switch(true){
+        case percentage < 30:
+          return 'danger';
+        case percentage < 50:
+          return 'warning';
+        case percentage < 80:
+          return 'info';
+        default:
+          return 'success';
+      };
+    });
+  </script>
   <script id="template-alert" type="text/x-handlebars-template">
     <div class="alert alert-warning alert-dismissible" role="alert">
       <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -164,7 +179,7 @@
       </td>
       <td class="cell-progress-bar">
         <div class="progress">
-          <div class="progress-bar progress-bar-danger" role="progressbar" aria-valuenow="{{percentage}}" aria-valuemin="0" aria-valuemax="100" style="width: {{percentage}}%;">
+          <div class="progress-bar progress-bar-{{color percentage}}" role="progressbar" aria-valuenow="{{percentage}}" aria-valuemin="0" aria-valuemax="100" style="width: {{percentage}}%;">
             {{percentage}}%
           </div>
         </div>
@@ -207,17 +222,28 @@
     }
 
     function hideGopher(){
-      $(".gopher").hide();
+      $(".container-gopher").hide();
     }
 
-    var populate = function(checks){
+    function showGopher(){
+      $(".container-gopher").show();
+      spinGopher();
+    }
+
+    var populateResults = function(checks){
         var $table = $(".table.results");
+        $table.empty();
         for (var i = 0; i < checks.length; i++) {
             checks[i].percentage = parseInt(checks[i].percentage * 100.0);
             var html = templates.check(checks[i]);
             $(html).appendTo($table);
         }
+        $(".container-results").removeClass('hidden').slideDown();
     };
+
+    var hideResults = function(){
+      $(".container-results").hide();
+    }
 
     // handle form submission
     $("form#check-form").submit(function(){
@@ -227,7 +253,8 @@
           method = $form.attr("method"),
           data = {};
       shrinkHeader();
-      spinGopher();
+      hideResults();
+      showGopher();
       $form.serializeArray().map(function(x){data[x.name] = x.value;}); 
       $.ajax({
           type: method,
@@ -245,7 +272,7 @@
           $alert.slideDown();
       }).done(function(data, textStatus, jqXHR){
           hideGopher();
-          populate(data.checks);
+          populateResults(data.checks);
       }).always(function(){
           loading = false;
       });
