@@ -83,6 +83,21 @@ func clone(url string) error {
 	return nil
 }
 
+type score struct {
+	Name          string              `json:"name"`
+	Description   string              `json:"description"`
+	FileSummaries []check.FileSummary `json:"file_summaries"`
+	Percentage    float64             `json:"percentage"`
+}
+
+type checksResp struct {
+	Checks  []score `json:"checks"`
+	Average float64 `json:"average"`
+	Files   int     `json:"files"`
+	Issues  int     `json:"issues"`
+	Repo    string  `json:"repo"`
+}
+
 func checkHandler(w http.ResponseWriter, r *http.Request) {
 	repo := r.FormValue("repo")
 	url := repo
@@ -90,25 +105,38 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 		url = "https://github.com/" + url
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+
+	// if this is a GET request, fetch from cached version in mongo
+	if r.Method == "GET" {
+		// try and fetch from mongo
+		coll, err := getMongoCollection()
+		if err != nil {
+			log.Println("Failed to get mongo collection during GET: ", err)
+		} else {
+			resp := checksResp{}
+			err := coll.Find(bson.M{"repo": repo}).One(&resp)
+			if err != nil {
+				log.Println("Failed to fetch from mogo: ", err)
+			} else {
+				b, err := json.Marshal(resp)
+				if err != nil {
+					log.Println("ERROR: could not marshal json:", err)
+					http.Error(w, err.Error(), 500)
+					return
+				}
+				w.Write(b)
+				log.Println("Loaded from cache!", repo)
+				return
+			}
+		}
+	}
+
 	err := clone(url)
 	if err != nil {
 		log.Println("ERROR: could not clone repo: ", err)
 		http.Error(w, fmt.Sprintf("Could not clone repo: %v", err), 500)
 		return
-	}
-
-	type score struct {
-		Name          string              `json:"name"`
-		Description   string              `json:"description"`
-		FileSummaries []check.FileSummary `json:"file_summaries"`
-		Percentage    float64             `json:"percentage"`
-	}
-	type checksResp struct {
-		Checks  []score `json:"checks"`
-		Average float64 `json:"average"`
-		Files   int     `json:"files"`
-		Issues  int     `json:"issues"`
-		Repo    string  `json:"repo"`
 	}
 
 	resp := checksResp{
