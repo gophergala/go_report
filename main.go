@@ -110,7 +110,7 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 		}(c)
 	}
 
-	for range checks {
+	for i := 0; i < len(checks); i++ {
 		s := <-ch
 		resp.Checks = append(resp.Checks, s)
 	}
