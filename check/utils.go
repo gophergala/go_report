@@ -50,14 +50,47 @@ func lineCount(filepath string) (int, error) {
 	return count, nil
 }
 
+type Error struct {
+	LineNumber  int
+	ErrorString string
+}
+
+type FileSummary struct {
+	Filename string
+	Errors   []Error
+}
+
+// ByFilename implements sort.Interface for []Person based on
+// the Age field.
+type ByFilename []FileSummary
+
+func (a ByFilename) Len() int           { return len(a) }
+func (a ByFilename) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByFilename) Less(i, j int) bool { return a[i].Filename < a[j].Filename }
+
+func getFileSummary(filename, out string) FileSummary {
+	fs := FileSummary{Filename: filename}
+	split := strings.Split(string(out), "\n")
+	for _, sp := range split[0 : len(split)-1] {
+		e := Error{ErrorString: sp}
+		e.LineNumber = 999999
+		//e.LineNumber = ...
+		// get the line number  (if go vet get last ":" split, if go lint get 2nd ":" split
+
+		fs.Errors = append(fs.Errors, e)
+	}
+
+	return fs
+}
+
 // GoTool runs a given go command (for example gofmt, go tool vet)
 // on a directory
-func GoTool(dir string, command []string) (float64, map[string][]string, error) {
+func GoTool(dir string, command []string) (float64, []FileSummary, error) {
 	files, err := GoFiles(dir)
 	if err != nil {
-		return 0, map[string][]string{}, nil
+		return 0, []FileSummary{}, nil
 	}
-	var failed = make(map[string][]string)
+	var failed = []FileSummary{}
 	for _, fi := range files {
 		params := command[1:]
 		params = append(params, fi)
@@ -65,38 +98,38 @@ func GoTool(dir string, command []string) (float64, map[string][]string, error) 
 		cmd := exec.Command(command[0], params...)
 		stdout, err := cmd.StdoutPipe()
 		if err != nil {
-			return 0, map[string][]string{}, nil
+			return 0, []FileSummary{}, nil
 		}
 
 		stderr, err := cmd.StderrPipe()
 		if err != nil {
-			return 0, map[string][]string{}, nil
+			return 0, []FileSummary{}, nil
 		}
 
 		err = cmd.Start()
 		if err != nil {
-			return 0, map[string][]string{}, nil
+			return 0, []FileSummary{}, nil
 		}
 
 		out, err := ioutil.ReadAll(stdout)
 		if err != nil {
-			return 0, map[string][]string{}, nil
+			return 0, []FileSummary{}, nil
 		}
 
 		errout, err := ioutil.ReadAll(stderr)
 		if err != nil {
-			return 0, map[string][]string{}, nil
+			return 0, []FileSummary{}, nil
 		}
 
 		if string(out) != "" {
-			split := strings.Split(string(out), "\n")
-			failed[fi] = append(failed[fi], split[0:len(split)-1]...)
+			fs := getFileSummary(fi, string(out))
+			failed = append(failed, fs)
 		}
 
 		// go vet logs to stderr
 		if string(errout) != "" {
-			split := strings.Split(string(errout), "\n")
-			failed[fi] = append(failed[fi], split[0:len(split)-1]...)
+			fs := getFileSummary(fi, string(errout))
+			failed = append(failed, fs)
 		}
 
 		err = cmd.Wait()
@@ -107,7 +140,7 @@ func GoTool(dir string, command []string) (float64, map[string][]string, error) 
 				// some commands exit 1 when files fail to pass (for example go vet)
 				if status.ExitStatus() != 1 {
 					return 0, failed, err
-					// return 0, map[string][]string{}, err
+					// return 0, Error{}, err
 				}
 			}
 		}
@@ -119,7 +152,8 @@ func GoTool(dir string, command []string) (float64, map[string][]string, error) 
 		if err != nil {
 			return 0, failed, err
 		}
-		return float64(lc-len(failed[files[0]])) / float64(lc), failed, nil
+
+		return float64(lc-len(failed)) / float64(lc), failed, nil
 	}
 
 	return float64(len(files)-len(failed)) / float64(len(files)), failed, nil

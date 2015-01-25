@@ -9,6 +9,6 @@ func (g GoVet) Name() string {
 }
 
 // Percentage returns the percentage of .go files that pass go vet
-func (g GoVet) Percentage() (float64, map[string][]string, error) {
+func (g GoVet) Percentage() (float64, []FileSummary, error) {
 	return GoTool(g.Dir, []string{"go", "tool", "vet"})
 }
