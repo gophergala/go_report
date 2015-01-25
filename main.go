@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 
 	"github.com/gophergala/go_report/check"
@@ -124,6 +125,23 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
+func reportHandler(w http.ResponseWriter, r *http.Request, org, repo string) {
+	http.ServeFile(w, r, "templates/home.html")
+}
+
+func makeReportHandler(fn func(http.ResponseWriter, *http.Request, string, string)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		validPath := regexp.MustCompile("^/report/([a-zA-Z0-9]+)/([a-zA-Z0-9]+)$")
+
+		m := validPath.FindStringSubmatch(r.URL.Path)
+		if m == nil {
+			http.NotFound(w, r)
+			return
+		}
+		fn(w, r, m[1], m[2])
+	}
+}
+
 func main() {
 	if err := os.MkdirAll("repos/src/github.com", 0755); err != nil && !os.IsExist(err) {
 		log.Fatal("ERROR: could not create repos dir: ", err)
@@ -131,6 +149,7 @@ func main() {
 
 	http.HandleFunc("/assets/", assetsHandler)
 	http.HandleFunc("/checks", checkHandler)
+	http.HandleFunc("/report/", makeReportHandler(reportHandler))
 	http.HandleFunc("/", homeHandler)
 
 	fmt.Println("Running on :8080...")
