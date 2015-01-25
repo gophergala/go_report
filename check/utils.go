@@ -181,7 +181,12 @@ func GoTool(dir string, command []string) (float64, []FileSummary, error) {
 			return 0, failed, err
 		}
 
-		return float64(lc-len(failed)) / float64(lc), failed, nil
+		var errors int
+		if len(failed) != 0 {
+			errors = len(failed[0].Errors)
+		}
+
+		return float64(lc-errors) / float64(lc), failed, nil
 	}
 
 	return float64(len(files)-len(failed)) / float64(len(files)), failed, nil
