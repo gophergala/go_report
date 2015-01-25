@@ -192,10 +192,10 @@
   </script>
   <script id="template-grade" type="text/x-handlebars-template">
     <div>
-      <div class="col-md-4">
+      <div class="col-md-6">
         <p><span class="huge">{{grade}}</span> &nbsp;&nbsp; {{gradeMessage grade}}</p>
       </div>
-      <div class="col-md-8 text-right">
+      <div class="col-md-6 text-right">
         <p>Found <span class="huge">{{issues}}</span> issues across <span class="huge">{{files}}</span> files</p>
       </div>
     </div>
@@ -334,15 +334,11 @@
       spinGopher();
     }
 
-    var populateResults = function(checks){
+    var populateResults = function(data){
+        var checks = data.checks;
         var $resultsText = $(".results-text");
-        var summary = {
-          average: 60.4,
-          grade: getGrade(60.3),
-          files: 23,
-          issues: 20
-        };
-        $resultsText.html($(templates.grade(checks)));
+        data.grade = getGrade(data.average * 100);
+        $resultsText.html($(templates.grade(data)));
 
         var $table = $(".table.results");
         $table.empty();
@@ -395,7 +391,7 @@
             $alert.slideDown();
         }).done(function(data, textStatus, jqXHR){
             hideGopher();
-            populateResults(data.checks);
+            populateResults(data);
         }).always(function(){
             loading = false;
         });
