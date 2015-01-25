@@ -86,15 +86,24 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 		Percentage    float64             `json:"percentage"`
 	}
 	type checksResp struct {
-		Checks []score `json:"checks"`
+		Checks  []score `json:"checks"`
+		Average float64 `json:"average"`
+		Files   int     `json:"files"`
+		Issues  int     `json:"issues"`
 	}
 
 	resp := checksResp{}
 	dir := dirName(url)
-	checks := []check.Check{check.GoFmt{Dir: dir},
-		check.GoVet{Dir: dir},
-		check.GoLint{Dir: dir},
-		check.GoCyclo{Dir: dir},
+	filenames, err := check.GoFiles(dir)
+	if err != nil {
+		log.Println("ERROR: could not get filenames: ", err)
+		http.Error(w, fmt.Sprintf("Could not get filenames: %v", err), 500)
+		return
+	}
+	checks := []check.Check{check.GoFmt{Dir: dir, Filenames: filenames},
+		check.GoVet{Dir: dir, Filenames: filenames},
+		check.GoLint{Dir: dir, Filenames: filenames},
+		check.GoCyclo{Dir: dir, Filenames: filenames},
 	}
 
 	ch := make(chan score)
@@ -111,10 +120,21 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 		}(c)
 	}
 
+	var avg float64
+	var issues = make(map[string]bool)
 	for i := 0; i < len(checks); i++ {
 		s := <-ch
 		resp.Checks = append(resp.Checks, s)
+		avg += s.Percentage
+		for _, fs := range s.FileSummaries {
+			issues[fs.Filename] = true
+		}
 	}
+
+	avg = avg / float64(len(checks))
+	resp.Average = avg
+	resp.Files = len(filenames)
+	resp.Issues = len(issues)
 
 	b, err := json.Marshal(resp)
 	if err != nil {

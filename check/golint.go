@@ -1,7 +1,8 @@
 package check
 
 type GoLint struct {
-	Dir string
+	Dir       string
+	Filenames []string
 }
 
 func (g GoLint) Name() string {
@@ -10,5 +11,5 @@ func (g GoLint) Name() string {
 
 // Percentage returns the percentage of .go files that pass golint
 func (g GoLint) Percentage() (float64, []FileSummary, error) {
-	return GoTool(g.Dir, []string{"golint"})
+	return GoTool(g.Dir, g.Filenames, []string{"golint"})
 }
