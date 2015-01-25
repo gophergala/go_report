@@ -49,7 +49,7 @@ func clone(url string) error {
 	dir := dirName(url)
 	_, err := os.Stat(dir)
 	if os.IsNotExist(err) {
-		cmd := exec.Command("git", "clone", url, dir)
+		cmd := exec.Command("git", "clone", "--depth", "1", "--single-branch", url, dir)
 		if err := cmd.Run(); err != nil {
 			return fmt.Errorf("could not run git clone: %v", err)
 		}
@@ -94,7 +94,6 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 		check.GoVet{Dir: dir},
 		check.GoLint{Dir: dir},
 		check.GoCyclo{Dir: dir},
-		check.GoImports{Dir: dir},
 	}
 
 	ch := make(chan score)

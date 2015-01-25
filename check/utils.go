@@ -17,6 +17,9 @@ import (
 func GoFiles(dir string) ([]string, error) {
 	var filenames []string
 	visit := func(fp string, fi os.FileInfo, err error) error {
+		if strings.Contains(fp, "Godeps") {
+			return nil
+		}
 		if err != nil {
 			fmt.Println(err) // can't walk here,
 			return nil       // but continue walking elsewhere
