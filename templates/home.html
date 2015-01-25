@@ -46,11 +46,29 @@
     .results {
       width: 100%;
     }
+    .results .head-row {
+      cursor: pointer;
+    }
     .results .cell-description {
       width: 30%;
     }
     .results .cell-progress-bar {
       width: 70%;
+    }
+    .results .files, .results .errors {
+      padding-left: 0;
+    }
+    .results .files .file {
+      list-style-type: none;
+      padding-left: 0;
+    }
+    .results .files .errors .error {
+      list-style-type: none;
+      padding-left: 4em;
+      margin: 1em 0;
+    }
+    .results .progress {
+      margin-bottom: 0;
     }
 
     /* Partials section
@@ -149,21 +167,6 @@
   </div>
   <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.3.js"></script>
   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0/handlebars.js"></script>
-  <script type="text/javascript">
-      // add a helper for picking the progress bar colors
-    Handlebars.registerHelper('color', function(percentage, options) {
-      switch(true){
-        case percentage < 30:
-          return 'danger';
-        case percentage < 50:
-          return 'warning';
-        case percentage < 80:
-          return 'info';
-        default:
-          return 'success';
-      };
-    });
-  </script>
   <script id="template-alert" type="text/x-handlebars-template">
     <div class="alert alert-warning alert-dismissible" role="alert">
       <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -173,7 +176,7 @@
     </div>
   </script>
   <script id="template-check" type="text/x-handlebars-template">
-    <tr>
+    <tr class="head-row">
       <td class="cell-description">
         {{{name}}}
       </td>
@@ -186,8 +189,42 @@
       </td>
     </tr>
   </script>
+  <script id="template-details" type="text/x-handlebars-template">
+    <tr class="details-row hidden">
+      <td colspan="2">
+        <div class="wrapper">
+        {{#each errors}}
+          <ul class="files">
+            <li class="file">
+              <ul class="errors">
+              {{@key}}
+              {{#each this}}
+                <li class="error">{{this}}</li>
+              {{/each}}
+              </ul>
+            </li>
+          </ul>
+        {{/each}}
+        </div>
+      </td>
+    </tr>
+  </script>
   <script type="text/javascript">
     var loading = false;
+
+    // add a helper for picking the progress bar colors
+    Handlebars.registerHelper('color', function(percentage, options) {
+      switch(true){
+        case percentage < 30:
+          return 'danger';
+        case percentage < 50:
+          return 'warning';
+        case percentage < 80:
+          return 'info';
+        default:
+          return 'success';
+      };
+    });
 
     // initialize handlebars templates
     var templates = {};
@@ -235,8 +272,15 @@
         $table.empty();
         for (var i = 0; i < checks.length; i++) {
             checks[i].percentage = parseInt(checks[i].percentage * 100.0);
-            var html = templates.check(checks[i]);
-            $(html).appendTo($table);
+            var $headRow = $(templates.check(checks[i]));
+            $headRow.on("click", function(){
+              $(this).next(".details-row").toggleClass('hidden');
+              
+            });
+            $headRow.appendTo($table);
+
+            var $details = $(templates.details(checks[i]));
+            $details.appendTo($table);
         }
         $(".container-results").removeClass('hidden').slideDown();
     };
@@ -277,7 +321,10 @@
           loading = false;
       });
       return false;
-    });    
+    });
+
+    hideGopher();
+    populateResults([{"name":"gocyclo","errors":{},"percentage":1},{"name":"golint","errors":{"repos/src/github.com/gojp/nihongo/app/controllers/app.go":["repos/src/github.com/gojp/nihongo/app/controllers/app.go:20:6: exported type App should have comment or be unexported","repos/src/github.com/gojp/nihongo/app/controllers/app.go:25:6: exported type Word should have comment or be unexported","repos/src/github.com/gojp/nihongo/app/controllers/app.go:29:6: exported type ByCommon should have comment or be unexported","repos/src/github.com/gojp/nihongo/app/controllers/app.go:35:6: exported type PopularSearch should have comment or be unexported","repos/src/github.com/gojp/nihongo/app/controllers/app.go:65:1: exported method App.Search should have comment or be unexported","repos/src/github.com/gojp/nihongo/app/controllers/app.go:65:1: receiver name a should be consistent with previous receiver name c for App","repos/src/github.com/gojp/nihongo/app/controllers/app.go:82:1: exported method App.Details should have comment or be unexported","repos/src/github.com/gojp/nihongo/app/controllers/app.go:118:1: exported method App.SearchGet should have comment or be unexported","repos/src/github.com/gojp/nihongo/app/controllers/app.go:125:1: exported method App.About should have comment or be unexported","repos/src/github.com/gojp/nihongo/app/controllers/app.go:129:1: exported method App.Resources should have comment or be unexported","repos/src/github.com/gojp/nihongo/app/controllers/app.go:133:1: exported method App.SavePhrase should have comment or be unexported","repos/src/github.com/gojp/nihongo/app/controllers/app.go:133:1: receiver name a should be consistent with previous receiver name c for App","repos/src/github.com/gojp/nihongo/app/controllers/app.go:177:1: exported method App.Register should have comment or be unexported","repos/src/github.com/gojp/nihongo/app/controllers/app.go:182:1: exported method App.LoginPage should have comment or be unexported","repos/src/github.com/gojp/nihongo/app/controllers/app.go:187:1: exported method App.Profile should have comment or be unexported","repos/src/github.com/gojp/nihongo/app/controllers/app.go:193:1: exported method App.SaveUser should have comment or be unexported","repos/src/github.com/gojp/nihongo/app/controllers/app.go:209:10: if block ends with a return statement, so drop this else and outdent its block","repos/src/github.com/gojp/nihongo/app/controllers/app.go:228:1: exported method App.Login should have comment or be unexported","repos/src/github.com/gojp/nihongo/app/controllers/app.go:244:1: exported method App.Logout should have comment or be unexported","repos/src/github.com/gojp/nihongo/app/controllers/app.go:251:1: exported method App.Index should have comment or be unexported"],"repos/src/github.com/gojp/nihongo/app/helpers/search.go":["repos/src/github.com/gojp/nihongo/app/helpers/search.go:26:1: exported function Search should have comment or be unexported","repos/src/github.com/gojp/nihongo/app/helpers/search.go:101:2: var searchJson should be searchJSON","repos/src/github.com/gojp/nihongo/app/helpers/search.go:135:2: var searchJson should be searchJSON"],"repos/src/github.com/gojp/nihongo/app/models/edict.go":["repos/src/github.com/gojp/nihongo/app/models/edict.go:7:6: exported type WordModel should have comment or be unexported","repos/src/github.com/gojp/nihongo/app/models/edict.go:17:6: exported type SearchTerm should have comment or be unexported"],"repos/src/github.com/gojp/nihongo/app/models/gloss.go":["repos/src/github.com/gojp/nihongo/app/models/gloss.go:3:6: exported type Gloss should have comment or be unexported"],"repos/src/github.com/gojp/nihongo/app/models/user.go":["repos/src/github.com/gojp/nihongo/app/models/user.go:10:6: exported type User should have comment or be unexported","repos/src/github.com/gojp/nihongo/app/models/user.go:22:1: exported method User.Validate should have comment or be unexported","repos/src/github.com/gojp/nihongo/app/models/user.go:22:1: receiver name user should be consistent with previous receiver name u for User","repos/src/github.com/gojp/nihongo/app/models/user.go:28:1: exported function ValidatePassword should have comment or be unexported"],"repos/src/github.com/gojp/nihongo/app/models/word.go":["repos/src/github.com/gojp/nihongo/app/models/word.go:10:6: exported type Word should have comment or be unexported","repos/src/github.com/gojp/nihongo/app/models/word.go:26:1: comment on exported method Word.HighlightQuery should be of the form \"HighlightQuery ...\""],"repos/src/github.com/gojp/nihongo/app/routes/routes.go":["repos/src/github.com/gojp/nihongo/app/routes/routes.go:1:1: package comment should be of the form \"Package routes ...\"","repos/src/github.com/gojp/nihongo/app/routes/routes.go:8:5: exported var App should have comment or be unexported","repos/src/github.com/gojp/nihongo/app/routes/routes.go:11:1: receiver name should not be an underscore","repos/src/github.com/gojp/nihongo/app/routes/routes.go:20:1: receiver name should not be an underscore","repos/src/github.com/gojp/nihongo/app/routes/routes.go:29:1: receiver name should not be an underscore","repos/src/github.com/gojp/nihongo/app/routes/routes.go:36:1: receiver name should not be an underscore","repos/src/github.com/gojp/nihongo/app/routes/routes.go:43:1: receiver name should not be an underscore","repos/src/github.com/gojp/nihongo/app/routes/routes.go:50:1: receiver name should not be an underscore","repos/src/github.com/gojp/nihongo/app/routes/routes.go:59:1: receiver name should not be an underscore","repos/src/github.com/gojp/nihongo/app/routes/routes.go:66:1: receiver name should not be an underscore","repos/src/github.com/gojp/nihongo/app/routes/routes.go:73:1: receiver name should not be an underscore","repos/src/github.com/gojp/nihongo/app/routes/routes.go:80:1: receiver name should not be an underscore","repos/src/github.com/gojp/nihongo/app/routes/routes.go:89:1: receiver name should not be an underscore","repos/src/github.com/gojp/nihongo/app/routes/routes.go:100:1: receiver name should not be an underscore","repos/src/github.com/gojp/nihongo/app/routes/routes.go:107:1: receiver name should not be an underscore","repos/src/github.com/gojp/nihongo/app/routes/routes.go:116:5: exported var Static should have comment or be unexported","repos/src/github.com/gojp/nihongo/app/routes/routes.go:119:1: receiver name should not be an underscore","repos/src/github.com/gojp/nihongo/app/routes/routes.go:130:1: receiver name should not be an underscore","repos/src/github.com/gojp/nihongo/app/routes/routes.go:145:5: exported var TestRunner should have comment or be unexported","repos/src/github.com/gojp/nihongo/app/routes/routes.go:148:1: receiver name should not be an underscore","repos/src/github.com/gojp/nihongo/app/routes/routes.go:155:1: receiver name should not be an underscore","repos/src/github.com/gojp/nihongo/app/routes/routes.go:166:1: receiver name should not be an underscore"],"repos/src/github.com/gojp/nihongo/tests/apptest.go":["repos/src/github.com/gojp/nihongo/tests/apptest.go:12:6: exported type Word should have comment or be unexported","repos/src/github.com/gojp/nihongo/tests/apptest.go:16:6: exported type PopularSearch should have comment or be unexported","repos/src/github.com/gojp/nihongo/tests/apptest.go:20:6: exported type ScoreWord should have comment or be unexported","repos/src/github.com/gojp/nihongo/tests/apptest.go:36:6: exported type AppTest should have comment or be unexported","repos/src/github.com/gojp/nihongo/tests/apptest.go:40:1: exported method AppTest.Before should have comment or be unexported","repos/src/github.com/gojp/nihongo/tests/apptest.go:43:1: exported method AppTest.TestThatIndexPageWorks should have comment or be unexported","repos/src/github.com/gojp/nihongo/tests/apptest.go:49:1: exported method AppTest.TestThatHelloSearchPageWorks should have comment or be unexported","repos/src/github.com/gojp/nihongo/tests/apptest.go:55:1: exported method AppTest.TestThatKonnichiwaSearchPageWorks should have comment or be unexported","repos/src/github.com/gojp/nihongo/tests/apptest.go:61:1: exported method AppTest.TestThatDoublePlusSearchWorks should have comment or be unexported","repos/src/github.com/gojp/nihongo/tests/apptest.go:67:1: exported method AppTest.TestSearchResults should have comment or be unexported","repos/src/github.com/gojp/nihongo/tests/apptest.go:93:1: exported method AppTest.TestSearchResultScores should have comment or be unexported","repos/src/github.com/gojp/nihongo/tests/apptest.go:112:1: exported method AppTest.After should have comment or be unexported"],"repos/src/github.com/gojp/nihongo/tests/helperstest.go":["repos/src/github.com/gojp/nihongo/tests/helperstest.go:8:6: exported type HelpersTest should have comment or be unexported","repos/src/github.com/gojp/nihongo/tests/helperstest.go:12:1: exported method HelpersTest.Before should have comment or be unexported","repos/src/github.com/gojp/nihongo/tests/helperstest.go:15:1: exported method HelpersTest.After should have comment or be unexported","repos/src/github.com/gojp/nihongo/tests/helperstest.go:18:1: exported method HelpersTest.TestMakeStrong should have comment or be unexported","repos/src/github.com/gojp/nihongo/tests/helperstest.go:23:1: exported method HelpersTest.TestConvertQueryToKana should have comment or be unexported"],"repos/src/github.com/gojp/nihongo/tests/modelstest.go":["repos/src/github.com/gojp/nihongo/tests/modelstest.go:8:6: exported type ModelsTest should have comment or be unexported","repos/src/github.com/gojp/nihongo/tests/modelstest.go:12:1: exported method ModelsTest.Before should have comment or be unexported","repos/src/github.com/gojp/nihongo/tests/modelstest.go:15:1: exported method ModelsTest.After should have comment or be unexported","repos/src/github.com/gojp/nihongo/tests/modelstest.go:18:1: exported method ModelsTest.TestHighlightQuery should have comment or be unexported"]},"percentage":0.2857142857142857},{"name":"goimports","errors":{"repos/src/github.com/gojp/nihongo/app/routes/routes.go":["repos/src/github.com/gojp/nihongo/app/routes/routes.go"]},"percentage":0.9285714285714286},{"name":"go_vet","errors":{"repos/src/github.com/gojp/nihongo/tests/apptest.go":["repos/src/github.com/gojp/nihongo/tests/apptest.go:106: Println call ends with newline"]},"percentage":0.9285714285714286},{"name":"gofmt","errors":{"repos/src/github.com/gojp/nihongo/app/controllers/app.go":["repos/src/github.com/gojp/nihongo/app/controllers/app.go"],"repos/src/github.com/gojp/nihongo/app/routes/routes.go":["repos/src/github.com/gojp/nihongo/app/routes/routes.go"],"repos/src/github.com/gojp/nihongo/tests/apptest.go":["repos/src/github.com/gojp/nihongo/tests/apptest.go"],"repos/src/github.com/gojp/nihongo/tests/search_test.go":["repos/src/github.com/gojp/nihongo/tests/search_test.go"]},"percentage":0.7142857142857143}]);
   </script>
 </body>
 </html>
