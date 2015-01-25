@@ -9,6 +9,6 @@ func (g GoLint) Name() string {
 }
 
 // Percentage returns the percentage of .go files that pass golint
-func (g GoLint) Percentage() (float64, map[string][]string, error) {
+func (g GoLint) Percentage() (float64, []FileSummary, error) {
 	return GoTool(g.Dir, []string{"golint"})
 }

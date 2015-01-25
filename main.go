@@ -79,9 +79,9 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type score struct {
-		Name       string              `json:"name"`
-		Errors     map[string][]string `json:"errors"`
-		Percentage float64             `json:"percentage"`
+		Name          string              `json:"name"`
+		FileSummaries []check.FileSummary `json:"file_summaries"`
+		Percentage    float64             `json:"percentage"`
 	}
 	type checksResp struct {
 		Checks []score `json:"checks"`
