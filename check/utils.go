@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 	"syscall"
@@ -68,19 +69,26 @@ func (a ByFilename) Len() int           { return len(a) }
 func (a ByFilename) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByFilename) Less(i, j int) bool { return a[i].Filename < a[j].Filename }
 
-func getFileSummary(filename, out string) FileSummary {
+func getFileSummary(filename, cmd, out string) (FileSummary, error) {
 	fs := FileSummary{Filename: filename}
 	split := strings.Split(string(out), "\n")
 	for _, sp := range split[0 : len(split)-1] {
 		e := Error{ErrorString: sp}
-		e.LineNumber = 999999
+		switch cmd {
+		case "golint", "gocyclo", "vet":
+			ln, err := strconv.Atoi(strings.Split(sp, ":")[1])
+			if err != nil {
+				return fs, err
+			}
+			e.LineNumber = ln
+		}
 		//e.LineNumber = ...
 		// get the line number  (if go vet get last ":" split, if go lint get 2nd ":" split
 
 		fs.Errors = append(fs.Errors, e)
 	}
 
-	return fs
+	return fs, nil
 }
 
 // GoTool runs a given go command (for example gofmt, go tool vet)
@@ -122,13 +130,23 @@ func GoTool(dir string, command []string) (float64, []FileSummary, error) {
 		}
 
 		if string(out) != "" {
-			fs := getFileSummary(fi, string(out))
+			fs, err := getFileSummary(fi, command[0], string(out))
+			if err != nil {
+				return 0, []FileSummary{}, nil
+			}
 			failed = append(failed, fs)
 		}
 
 		// go vet logs to stderr
 		if string(errout) != "" {
-			fs := getFileSummary(fi, string(errout))
+			cmd := command[0]
+			if reflect.DeepEqual(command, []string{"go", "tool", "vet"}) {
+				cmd = "vet"
+			}
+			fs, err := getFileSummary(fi, cmd, string(errout))
+			if err != nil {
+				return 0, []FileSummary{}, nil
+			}
 			failed = append(failed, fs)
 		}
 
