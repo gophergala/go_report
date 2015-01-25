@@ -4,6 +4,8 @@
  WORKDIR /go/src/github.com/gophergala/go_report
  ENV PATH /go/bin:$PATH
  COPY . /go/src/github.com/gophergala/go_report
+ RUN go get golang.org/x/tools/cmd/goimports
+ RUN go get github.com/fzipp/gocyclo
  RUN go get github.com/golang/lint/golint
  RUN go get golang.org/x/tools/cmd/vet
  RUN go-wrapper install
