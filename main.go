@@ -151,7 +151,7 @@ func reportHandler(w http.ResponseWriter, r *http.Request, org, repo string) {
 
 func makeReportHandler(fn func(http.ResponseWriter, *http.Request, string, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		validPath := regexp.MustCompile("^/report/([a-zA-Z0-9]+)/([a-zA-Z0-9]+)$")
+		validPath := regexp.MustCompile(`^/report/([a-zA-Z0-9\-_]+)/([a-zA-Z0-9\-_]+)$`)
 
 		m := validPath.FindStringSubmatch(r.URL.Path)
 		if m == nil {
