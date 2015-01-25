@@ -86,7 +86,10 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 		Percentage    float64             `json:"percentage"`
 	}
 	type checksResp struct {
-		Checks []score `json:"checks"`
+		Checks  []score `json:"checks"`
+		Average float64 `json:"average"`
+		Files   int     `json:"files"`
+		Issues  int     `json:"issues"`
 	}
 
 	resp := checksResp{}
@@ -111,10 +114,15 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 		}(c)
 	}
 
+	var avg float64
 	for i := 0; i < len(checks); i++ {
 		s := <-ch
 		resp.Checks = append(resp.Checks, s)
+		avg += s.Percentage
 	}
+
+	avg = avg / float64(len(checks))
+	resp.Average = avg
 
 	b, err := json.Marshal(resp)
 	if err != nil {
