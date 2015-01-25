@@ -1,7 +1,8 @@
 package check
 
 type GoVet struct {
-	Dir string
+	Dir       string
+	Filenames []string
 }
 
 func (g GoVet) Name() string {
@@ -10,5 +11,5 @@ func (g GoVet) Name() string {
 
 // Percentage returns the percentage of .go files that pass go vet
 func (g GoVet) Percentage() (float64, []FileSummary, error) {
-	return GoTool(g.Dir, []string{"go", "tool", "vet"})
+	return GoTool(g.Dir, g.Filenames, []string{"go", "tool", "vet"})
 }

@@ -1,7 +1,8 @@
 package check
 
 type GoFmt struct {
-	Dir string
+	Dir       string
+	Filenames []string
 }
 
 func (g GoFmt) Name() string {
@@ -10,5 +11,5 @@ func (g GoFmt) Name() string {
 
 // Percentage returns the percentage of .go files that pass gofmt
 func (g GoFmt) Percentage() (float64, []FileSummary, error) {
-	return GoTool(g.Dir, []string{"gofmt", "-s", "-l"})
+	return GoTool(g.Dir, g.Filenames, []string{"gofmt", "-s", "-l"})
 }

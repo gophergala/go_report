@@ -103,13 +103,9 @@ func getFileSummary(filename, dir, cmd, out string) (FileSummary, error) {
 
 // GoTool runs a given go command (for example gofmt, go tool vet)
 // on a directory
-func GoTool(dir string, command []string) (float64, []FileSummary, error) {
-	files, err := GoFiles(dir)
-	if err != nil {
-		return 0, []FileSummary{}, nil
-	}
+func GoTool(dir string, filenames, command []string) (float64, []FileSummary, error) {
 	var failed = []FileSummary{}
-	for _, fi := range files {
+	for _, fi := range filenames {
 		params := command[1:]
 		params = append(params, fi)
 
@@ -175,8 +171,8 @@ func GoTool(dir string, command []string) (float64, []FileSummary, error) {
 
 	}
 
-	if len(files) == 1 {
-		lc, err := lineCount(files[0])
+	if len(filenames) == 1 {
+		lc, err := lineCount(filenames[0])
 		if err != nil {
 			return 0, failed, err
 		}
@@ -189,5 +185,5 @@ func GoTool(dir string, command []string) (float64, []FileSummary, error) {
 		return float64(lc-errors) / float64(lc), failed, nil
 	}
 
-	return float64(len(files)-len(failed)) / float64(len(files)), failed, nil
+	return float64(len(filenames)-len(failed)) / float64(len(filenames)), failed, nil
 }

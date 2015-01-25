@@ -94,10 +94,16 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 
 	resp := checksResp{}
 	dir := dirName(url)
-	checks := []check.Check{check.GoFmt{Dir: dir},
-		check.GoVet{Dir: dir},
-		check.GoLint{Dir: dir},
-		check.GoCyclo{Dir: dir},
+	filenames, err := check.GoFiles(dir)
+	if err != nil {
+		log.Println("ERROR: could not get filenames: ", err)
+		http.Error(w, fmt.Sprintf("Could not get filenames: %v", err), 500)
+		return
+	}
+	checks := []check.Check{check.GoFmt{Dir: dir, Filenames: filenames},
+		check.GoVet{Dir: dir, Filenames: filenames},
+		check.GoLint{Dir: dir, Filenames: filenames},
+		check.GoCyclo{Dir: dir, Filenames: filenames},
 	}
 
 	ch := make(chan score)
@@ -123,6 +129,7 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 
 	avg = avg / float64(len(checks))
 	resp.Average = avg
+	resp.Files = len(filenames)
 
 	b, err := json.Marshal(resp)
 	if err != nil {
