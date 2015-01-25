@@ -11,7 +11,24 @@ import (
 	"strings"
 
 	"github.com/gophergala/go_report/check"
+	"gopkg.in/mgo.v2"
+	"labix.org/v2/mgo/bson"
 )
+
+var (
+	mongoURL        = "mongodb://localhost:27017"
+	mongoDatabase   = "goreportcard"
+	mongoCollection = "reports"
+)
+
+func getMongoCollection() (*mgo.Collection, error) {
+	session, err := mgo.Dial(mongoURL)
+	if err != nil {
+		return nil, err
+	}
+	c := session.DB(mongoDatabase).C(mongoCollection)
+	return c, nil
+}
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Serving home page")
@@ -91,9 +108,12 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 		Average float64 `json:"average"`
 		Files   int     `json:"files"`
 		Issues  int     `json:"issues"`
+		Repo    string  `json:"repo"`
 	}
 
-	resp := checksResp{}
+	resp := checksResp{
+		Repo: repo,
+	}
 	dir := dirName(url)
 	filenames, err := check.GoFiles(dir)
 	if err != nil {
@@ -149,6 +169,18 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write(b)
+
+	// write to mongo
+	coll, err := getMongoCollection()
+	if err != nil {
+		log.Println("Failed to get mongo collection: ", err)
+	} else {
+		log.Println("Writing to mongo...")
+		_, err := coll.Upsert(bson.M{"Repo": repo}, resp)
+		if err != nil {
+			log.Println("Mongo writing error:", err)
+		}
+	}
 }
 
 func reportHandler(w http.ResponseWriter, r *http.Request, org, repo string) {
