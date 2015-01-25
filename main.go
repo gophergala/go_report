@@ -96,15 +96,23 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 		check.GoImports{Dir: dir},
 	}
 
+	ch := make(chan score)
 	for _, c := range checks {
-		p, out, err := c.Percentage()
-		if err != nil {
-			log.Printf("ERROR: (%s) %v", c.Name(), err)
-			http.Error(w, fmt.Sprintf("Could not run check %v: %v\r\n%v", c.Name(), err, out), 500)
-			return
-		}
-		ch := score{c.Name(), out, p}
-		resp.Checks = append(resp.Checks, ch)
+		go func(c check.Check) {
+			p, out, err := c.Percentage()
+			if err != nil {
+				log.Printf("ERROR: (%s) %v", c.Name(), err)
+				//http.Error(w, fmt.Sprintf("Could not run check %v: %v\r\n%v", c.Name(), err, out), 500)
+				//return
+			}
+			s := score{c.Name(), out, p}
+			ch <- s
+		}(c)
+	}
+
+	for range checks {
+		s := <-ch
+		resp.Checks = append(resp.Checks, s)
 	}
 
 	b, err := json.Marshal(resp)
