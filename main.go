@@ -93,7 +93,6 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 		check.GoVet{Dir: dir},
 		check.GoLint{Dir: dir},
 		check.GoCyclo{Dir: dir},
-		check.GoImports{Dir: dir},
 	}
 
 	ch := make(chan score)
