@@ -66,12 +66,13 @@ func clone(url string) error {
 }
 
 func checkHandler(w http.ResponseWriter, r *http.Request) {
-	repo := r.FormValue("url")
-	if !strings.HasPrefix(repo, "https://github.com/") {
-		repo = "https://github.com/" + repo
+	repo := r.FormValue("repo")
+	url := repo
+	if !strings.HasPrefix(url, "https://github.com/") {
+		url = "https://github.com/" + url
 	}
 
-	err := clone(repo)
+	err := clone(url)
 	if err != nil {
 		log.Println("ERROR: could not clone repo: ", err)
 		http.Error(w, fmt.Sprintf("Could not clone repo: %v", err), 500)
@@ -88,7 +89,7 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := checksResp{}
-	dir := dirName(repo)
+	dir := dirName(url)
 	checks := []check.Check{check.GoFmt{Dir: dir},
 		check.GoVet{Dir: dir},
 		check.GoLint{Dir: dir},

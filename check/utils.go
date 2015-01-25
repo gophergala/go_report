@@ -58,6 +58,7 @@ type Error struct {
 
 type FileSummary struct {
 	Filename string  `json:"filename"`
+	FileURL  string  `json:"file_url"`
 	Errors   []Error `json:"errors"`
 }
 
@@ -69,8 +70,14 @@ func (a ByFilename) Len() int           { return len(a) }
 func (a ByFilename) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByFilename) Less(i, j int) bool { return a[i].Filename < a[j].Filename }
 
-func getFileSummary(filename, cmd, out string) (FileSummary, error) {
-	fs := FileSummary{Filename: filename}
+func getFileSummary(filename, dir, cmd, out string) (FileSummary, error) {
+	filename = strings.TrimPrefix(filename, "repos/src")
+	githubLink := strings.TrimPrefix(dir, "repos/src")
+	fileURL := "https://" + strings.TrimPrefix(dir, "repos/src/") + "/blob/master" + strings.TrimPrefix(filename, githubLink)
+	fs := FileSummary{
+		Filename: filename,
+		FileURL:  fileURL,
+	}
 	split := strings.Split(string(out), "\n")
 	for _, sp := range split[0 : len(split)-1] {
 		e := Error{ErrorString: sp}
@@ -82,8 +89,6 @@ func getFileSummary(filename, cmd, out string) (FileSummary, error) {
 			}
 			e.LineNumber = ln
 		}
-		//e.LineNumber = ...
-		// get the line number  (if go vet get last ":" split, if go lint get 2nd ":" split
 
 		fs.Errors = append(fs.Errors, e)
 	}
@@ -130,7 +135,7 @@ func GoTool(dir string, command []string) (float64, []FileSummary, error) {
 		}
 
 		if string(out) != "" {
-			fs, err := getFileSummary(fi, command[0], string(out))
+			fs, err := getFileSummary(fi, dir, command[0], string(out))
 			if err != nil {
 				return 0, []FileSummary{}, nil
 			}
@@ -143,7 +148,7 @@ func GoTool(dir string, command []string) (float64, []FileSummary, error) {
 			if reflect.DeepEqual(command, []string{"go", "tool", "vet"}) {
 				cmd = "vet"
 			}
-			fs, err := getFileSummary(fi, cmd, string(errout))
+			fs, err := getFileSummary(fi, dir, cmd, string(errout))
 			if err != nil {
 				return 0, []FileSummary{}, nil
 			}
