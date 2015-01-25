@@ -13,3 +13,8 @@ func (g GoVet) Name() string {
 func (g GoVet) Percentage() (float64, []FileSummary, error) {
 	return GoTool(g.Dir, g.Filenames, []string{"go", "tool", "vet"})
 }
+
+// Description returns the description of go lint
+func (g GoVet) Description() string {
+	return `<code>go vet</code> examines Go source code and reports suspicious constructs, such as Printf calls whose arguments do not align with the format string.`
+}

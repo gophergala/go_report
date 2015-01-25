@@ -13,3 +13,8 @@ func (g GoLint) Name() string {
 func (g GoLint) Percentage() (float64, []FileSummary, error) {
 	return GoTool(g.Dir, g.Filenames, []string{"golint"})
 }
+
+// Description returns the description of go lint
+func (g GoLint) Description() string {
+	return `Golint is a linter for Go source code.`
+}

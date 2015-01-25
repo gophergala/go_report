@@ -83,6 +83,9 @@
       font-size: 3em;
       font-weight: bold;
     }
+    .results .tool-description {
+      color: #666;
+    }
 
     /* Partials section
     -------------------------------------------------- */
@@ -218,6 +221,7 @@
     <tr class="details-row hidden">
       <td colspan="2">
         <div class="wrapper">
+          <p class="tool-description">{{{description}}}</p>
         {{^file_summaries}}
           <p class="perfect">No problems detected. Good job!</p>
         {{/file_summaries}}

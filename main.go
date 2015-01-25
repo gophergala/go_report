@@ -82,6 +82,7 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 
 	type score struct {
 		Name          string              `json:"name"`
+		Description   string              `json:"description"`
 		FileSummaries []check.FileSummary `json:"file_summaries"`
 		Percentage    float64             `json:"percentage"`
 	}
@@ -115,7 +116,12 @@ func checkHandler(w http.ResponseWriter, r *http.Request) {
 				//http.Error(w, fmt.Sprintf("Could not run check %v: %v\r\n%v", c.Name(), err, out), 500)
 				//return
 			}
-			s := score{c.Name(), out, p}
+			s := score{
+				Name:          c.Name(),
+				Description:   c.Description(),
+				FileSummaries: out,
+				Percentage:    p,
+			}
 			ch <- s
 		}(c)
 	}
