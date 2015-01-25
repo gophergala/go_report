@@ -52,13 +52,13 @@ func lineCount(filepath string) (int, error) {
 }
 
 type Error struct {
-	LineNumber  int
-	ErrorString string
+	LineNumber  int    `json:"line_number"`
+	ErrorString string `json:"error_string"`
 }
 
 type FileSummary struct {
-	Filename string
-	Errors   []Error
+	Filename string  `json:"filename"`
+	Errors   []Error `json:"errors"`
 }
 
 // ByFilename implements sort.Interface for []Person based on
