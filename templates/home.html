@@ -76,6 +76,13 @@
     .results .perfect {
       color: #aaa;
     }
+    .results-text p {
+      font-size: 1.5em;
+    }
+    .huge {
+      font-size: 3em;
+      font-weight: bold;
+    }
 
     /* Partials section
     -------------------------------------------------- */
@@ -150,6 +157,8 @@
       </div>
     </div>
     <div class="row container-results hidden">
+      <div class="col-md-10 col-md-offset-1 results-text">
+      </div>
       <div class="col-md-10 col-md-offset-1">
         <table class="table table-hover results">
         </table>
@@ -178,6 +187,16 @@
       <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
       <div class="message">
       {{{message}}}
+      </div>
+    </div>
+  </script>
+  <script id="template-grade" type="text/x-handlebars-template">
+    <div>
+      <div class="col-md-4">
+        <p><span class="huge">{{grade}}</span> &nbsp;&nbsp; {{gradeMessage grade}}</p>
+      </div>
+      <div class="col-md-8 text-right">
+        <p>Found <span class="huge">{{issues}}</span> issues across <span class="huge">{{files}}</span> files</p>
       </div>
     </div>
   </script>
@@ -222,6 +241,39 @@
   </script>
   <script type="text/javascript">
     var loading = false;
+
+    // add a helper for getting the grade for a percentage
+    var getGrade = function(percentage) {
+      switch(true){
+        case percentage > 90:
+          return "A+";
+        case percentage > 80:
+          return "A";
+        case percentage > 70:
+          return "B";
+        case percentage > 60:
+          return "C";
+        case percentage > 50:
+          return "D";
+        case percentage > 40:
+          return "E";
+        default:
+          return "F";
+      }
+    };
+
+    Handlebars.registerHelper('gradeMessage', function(grade, options) {
+      var gradeMessages = {
+        "A+": "Excellent!",
+        "A": "Great!",
+        "B": "Not bad!",
+        "C": "Needs some work",
+        "D": "Needs lots improvement",
+        "E": "Urgent improvement needed",
+        "F": "... is for lots of things to Fix!"
+      };
+      return gradeMessages[grade];
+    });
 
     // add a helper for picking the progress bar colors
     Handlebars.registerHelper('color', function(percentage, options) {
@@ -283,6 +335,15 @@
     }
 
     var populateResults = function(checks){
+        var $resultsText = $(".results-text");
+        var summary = {
+          average: 60.4,
+          grade: getGrade(60.3),
+          files: 23,
+          issues: 20
+        };
+        $resultsText.html($(templates.grade(summary)));
+
         var $table = $(".table.results");
         $table.empty();
         for (var i = 0; i < checks.length; i++) {
