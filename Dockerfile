@@ -8,6 +8,7 @@
  RUN go get github.com/fzipp/gocyclo
  RUN go get github.com/golang/lint/golint
  RUN go get golang.org/x/tools/cmd/vet
+ RUN go get gopkg.in/mgo.v2
  RUN go-wrapper install
  CMD ["go-wrapper", "run"]
  #ONBUILD COPY . /go/src/github.com/gophergala/go_report
