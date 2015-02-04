@@ -1,5 +1,13 @@
 # Go Report Card
 
+### Moved to https://github.com/gojp/goreportcard
+
+Seen here is the submission for the Gopher Gala 2015. Further development is being continued at the URL above, please open PRs and issues there. Thanks!
+
+******
+******
+******
+
 A web application that generates a report on the quality of an open source go project. It uses several measures, including `gofmt`, `go vet`, `go lint` and `gocyclo`.
 
 #### Live demo: [http://goreportcard.com](http://goreportcard.com)
